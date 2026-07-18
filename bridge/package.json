@@ -7,7 +7,7 @@
     "godot-mcp": "src/index.mjs"
   },
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/lib.test.mjs test/e2e.test.mjs"
   },
   "dependencies": {
     "ws": "^8.18.0"
