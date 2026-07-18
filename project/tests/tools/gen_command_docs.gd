@@ -47,6 +47,7 @@ func _initialize() -> void:
 					notes.strip_edges(),
 				])
 		lines.append("")
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://addons/ai_console/docs"))
 	var out := FileAccess.open("res://addons/ai_console/docs/COMMANDS.md", FileAccess.WRITE)
 	if out == null:
 		push_error("cannot write COMMANDS.md")
