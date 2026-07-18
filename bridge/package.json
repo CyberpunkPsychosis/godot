@@ -1,0 +1,18 @@
+{
+  "name": "godot-mcp-bridge",
+  "version": "0.1.0",
+  "description": "stdio <-> WebSocket bridge connecting MCP clients (Claude Code, Cursor, Cline, ...) to the AI Console MCP server running inside the Godot editor.",
+  "type": "module",
+  "bin": {
+    "godot-mcp": "src/index.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
