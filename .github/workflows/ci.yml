@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+env:
+  GODOT_VERSION: 4.4.1-stable
+
+jobs:
+  godot-validate:
+    name: Godot headless validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot binary
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot-bin
+          key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
+
+      - name: Download Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot-bin
+          curl -fsSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot-bin
+
+      - name: Validate project (import + headless checks)
+        run: |
+          export GODOT_BIN="$HOME/godot-bin/Godot_v${GODOT_VERSION}_linux.x86_64"
+          bash scripts/ci_validate.sh
+
+      - name: Generate command docs
+        run: |
+          export GODOT_BIN="$HOME/godot-bin/Godot_v${GODOT_VERSION}_linux.x86_64"
+          "$GODOT_BIN" --headless --path project --script res://tests/tools/gen_command_docs.gd
+
+      - name: Upload command docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: COMMANDS.md
+          path: project/addons/ai_console/docs/COMMANDS.md
+
+  bridge-test:
+    name: Bridge unit + e2e tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: bridge/package-lock.json
+      - run: npm ci
+        working-directory: bridge
+      - run: npm test
+        working-directory: bridge

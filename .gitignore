@@ -1,0 +1,17 @@
+# Node
+bridge/node_modules/
+
+# Godot generated
+project/.godot/
+*.uid
+
+# Packaging build outputs
+packaging/dist/
+packaging/staging/
+packaging/output/
+
+# Generated docs (built in CI from the registry)
+project/addons/ai_console/docs/COMMANDS.md
+
+# Python
+__pycache__/
