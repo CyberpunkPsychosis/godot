@@ -46,6 +46,35 @@ jobs:
           name: COMMANDS.md
           path: project/addons/ai_console/docs/COMMANDS.md
 
+  injector-test:
+    name: Addon injector script (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inject addon into project.godot variants (idempotent)
+        shell: pwsh
+        run: |
+          $cases = @(
+            "config_version=5`n`n[application]`n`nconfig/name=`"NoSection`"`n",
+            "config_version=5`n`n[editor_plugins]`n",
+            "config_version=5`n`n[editor_plugins]`n`nenabled=PackedStringArray(`"res://addons/other/plugin.cfg`")`n"
+          )
+          $i = 0
+          foreach ($case in $cases) {
+            $i++
+            $proj = Join-Path $env:RUNNER_TEMP "proj$i"
+            New-Item -ItemType Directory -Force -Path $proj | Out-Null
+            Set-Content -Path (Join-Path $proj "project.godot") -Value $case -NoNewline
+            ./packaging/tools/add_ai_to_project.ps1 -Project $proj -AddonSource ./project/addons/ai_console
+            ./packaging/tools/add_ai_to_project.ps1 -Project $proj -AddonSource ./project/addons/ai_console
+            if (-not (Test-Path (Join-Path $proj "addons/ai_console/plugin.gd"))) { throw "case ${i}: addon not copied" }
+            $cfg = Get-Content (Join-Path $proj "project.godot") -Raw
+            $count = ([regex]::Matches($cfg, [regex]::Escape("res://addons/ai_console/plugin.cfg"))).Count
+            if ($count -ne 1) { throw "case ${i}: expected exactly 1 plugin entry, got ${count}:`n$cfg" }
+            if ($i -eq 3 -and $cfg -notmatch "res://addons/other/plugin.cfg") { throw "case 3: pre-existing plugin entry was lost" }
+            Write-Host "case $i OK"
+          }
+
   bridge-test:
     name: Bridge unit + e2e tests
     runs-on: ubuntu-latest
