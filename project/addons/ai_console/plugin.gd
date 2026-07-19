@@ -14,6 +14,7 @@ const PortFile := preload("res://addons/ai_console/mcp/port_file.gd")
 const ChatDock := preload("res://addons/ai_console/chat/chat_dock.gd")
 const ChatSettings := preload("res://addons/ai_console/chat/chat_settings.gd")
 const LogTail := preload("res://addons/ai_console/debug/log_tail.gd")
+const Downloader := preload("res://addons/ai_console/core/asset_sources/downloader.gd")
 
 var ctx  # CommandContext
 var registry  # Registry
@@ -21,6 +22,7 @@ var ops: Node
 var ws_server  # WSServer
 var dock  # ChatDock
 var log_tail  # LogTail
+var downloader: Node  # Downloader (asset pipeline HTTP + zip)
 var ws_port := 0
 
 
@@ -32,6 +34,9 @@ func _enter_tree() -> void:
 	ops = Ops.new()
 	ops.name = "AIConsoleOps"
 	add_child(ops)
+	downloader = Downloader.new()
+	downloader.name = "AIConsoleDownloader"
+	add_child(downloader)
 	ctx = CommandContext.new()
 	ctx.plugin = self
 	ctx.ops = ops
@@ -60,6 +65,9 @@ func _exit_tree() -> void:
 	if ops != null:
 		ops.queue_free()
 		ops = null
+	if downloader != null:
+		downloader.queue_free()
+		downloader = null
 
 
 func _process(_delta: float) -> void:

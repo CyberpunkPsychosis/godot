@@ -17,4 +17,22 @@ echo "== import pass =="
 echo "== headless checks =="
 "$GODOT_BIN" --headless --path "$PROJECT_DIR" --script res://tests/smoke/headless_check.gd
 
+echo "== zip extraction safety =="
+if command -v python3 >/dev/null; then
+  FIXTURES="$(mktemp -d)"
+  python3 - "$FIXTURES" <<'EOF'
+import sys, zipfile, os
+fixtures = sys.argv[1]
+with zipfile.ZipFile(os.path.join(fixtures, "evil.zip"), "w") as z:
+    z.writestr("ok.txt", "fine")
+    z.writestr("../escaped.txt", "path traversal payload")
+with zipfile.ZipFile(os.path.join(fixtures, "clean.zip"), "w") as z:
+    z.writestr("sub/hello.txt", "hello")
+EOF
+  AI_ZIP_FIXTURES="$FIXTURES" "$GODOT_BIN" --headless --path "$PROJECT_DIR" --script res://tests/smoke/zip_safety_check.gd
+  rm -rf "$FIXTURES"
+else
+  echo "python3 missing; skipping zip fixtures"
+fi
+
 echo "OK"

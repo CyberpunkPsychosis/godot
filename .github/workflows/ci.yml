@@ -46,6 +46,39 @@ jobs:
           name: COMMANDS.md
           path: project/addons/ai_console/docs/COMMANDS.md
 
+  asset-index-check:
+    name: Asset index URLs reachable
+    runs-on: ubuntu-latest
+    continue-on-error: true  # external sites may hiccup; this is advisory
+    steps:
+      - uses: actions/checkout@v4
+      - name: HEAD-check curated index homepages + live APIs
+        run: |
+          python3 - <<'EOF'
+          import json, urllib.request, sys
+          urls = ["https://api.polyhaven.com/assets?type=models",
+                  "https://ambientcg.com/api/v2/full_json?type=Material&limit=1"]
+          with open("project/addons/ai_console/core/asset_sources/asset_index.json") as f:
+              data = json.load(f)
+          assert data["entries"], "asset index is empty"
+          for entry in data["entries"]:
+              for key in ("id", "name", "kind", "license", "homepage", "source", "download"):
+                  assert key in entry, f"{entry.get('id')}: missing {key}"
+              urls.append(entry["homepage"])
+          failed = []
+          for url in urls:
+              try:
+                  req = urllib.request.Request(url, method="GET", headers={"User-Agent": "godot-ai-console-ci"})
+                  with urllib.request.urlopen(req, timeout=20) as resp:
+                      print(resp.status, url)
+                      if resp.status >= 400:
+                          failed.append(url)
+              except Exception as exc:
+                  print("ERR", url, exc)
+                  failed.append(url)
+          sys.exit(1 if failed else 0)
+          EOF
+
   injector-test:
     name: Addon injector script (Windows)
     runs-on: windows-latest

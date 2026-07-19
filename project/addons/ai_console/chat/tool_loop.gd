@@ -157,6 +157,7 @@ func _system_prompt() -> String:
 		"- Every scene mutation is undoable with Ctrl+Z; tell the user this when you make big changes.\n" +
 		"- Save with save_scene after finishing a coherent set of edits.\n" +
 		"- After building something playable, offer to play_scene and check wait_for_errors.\n" +
+		"- Assets: search_assets finds free CC0 art (Poly Haven/ambientCG auto-download via download_asset; Kenney/Quaternius/Mixamo entries are manual — give the user the homepage link, then import_asset_zip their downloaded file). Prefer real assets over placeholders when the user wants visuals: animated 3D characters via build_character_3d with model_scene, 2D via create_sprite_frames + build_character_2d with sprite_frames.\n" +
 		"- Keep node names PascalCase, script files snake_case under res://scripts/.\n" +
 		"- Reply in the user's language. Be concise; the panel is small."
 	)
