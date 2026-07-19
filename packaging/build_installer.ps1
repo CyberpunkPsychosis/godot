@@ -33,12 +33,18 @@ Copy-Item "$repo\project\*" "$staging\template" -Recurse -Exclude ".godot"
 Remove-Item "$staging\template\tests" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item "$staging\template\.godot" -Recurse -Force -ErrorAction SilentlyContinue
 
-# 4. Docs.
+# 4. Standalone addon copy + injector tool ("Add AI Console to a Project").
+New-Item -ItemType Directory -Force -Path "$staging\addon" | Out-Null
+Copy-Item "$repo\project\addons\ai_console" "$staging\addon\ai_console" -Recurse
+New-Item -ItemType Directory -Force -Path "$staging\tools" | Out-Null
+Copy-Item "$repo\packaging\tools\add_ai_to_project.ps1" "$staging\tools"
+
+# 5. Docs.
 New-Item -ItemType Directory -Force -Path "$staging\docs" | Out-Null
 Copy-Item "$repo\README.md" "$staging\docs"
 Copy-Item "$repo\docs\*" "$staging\docs" -Recurse -ErrorAction SilentlyContinue
 
-# 5. Compile the installer.
+# 6. Compile the installer.
 New-Item -ItemType Directory -Force -Path "$PSScriptRoot\output" | Out-Null
 $iscc = "ISCC.exe"
 if (-not (Get-Command $iscc -ErrorAction SilentlyContinue)) {

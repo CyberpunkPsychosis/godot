@@ -3,7 +3,7 @@
 AI Console 插件在 Godot 编辑器内启动一个 **MCP 服务器**(WebSocket,仅监听 `127.0.0.1:9080-9099`)。
 任何支持 MCP 的 AI agent 都通过 `bridge/`(stdio↔WebSocket 桥)连接它,然后就能直接操作编辑器:建节点、搭场景、写脚本、运行游戏、读报错。
 
-前提:**先在 Godot 编辑器里打开项目**(插件启用后自动启动 MCP 服务器,底部 AI 面板会显示端口)。
+前提:**先在 Godot 编辑器里打开一个装了 AI Console 插件的项目**(插件启用后自动启动 MCP 服务器,底部 AI 面板会显示端口)。插件按项目生效:安装版自带的 `MyFirstAIProject` 已预装;其他项目用开始菜单的 **"Add AI Console to a Project"** 一键注入(或把 `project/addons/ai_console` 拷进项目 `addons/` 并在项目设置里启用)。
 
 ## Claude Code
 

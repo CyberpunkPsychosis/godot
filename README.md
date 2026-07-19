@@ -76,6 +76,22 @@ cd bridge; npm ci; cd ..
 
 安装后:开始菜单“Godot AI Console”直接打开预装插件的首个项目;模板复制在 `文档\GodotAI\MyFirstAIProject`。
 
+## 给其他项目添加 AI(导入的旧项目 / 新建的项目)
+
+AI 控制台是**按项目安装的编辑器插件**——只有装了插件的项目才有 AI 面板。给任意项目添加:
+
+1. 开始菜单 → **“Add AI Console to a Project”** → 选择项目文件夹(含 `project.godot` 的那层)
+2. 用 Godot AI Console 重新打开该项目,底部即出现 AI 面板
+
+命令行等价操作:`powershell -File "C:\Program Files\GodotAI\tools\add_ai_to_project.ps1" -Project <项目路径>`。重复运行安全(幂等),也可用来升级项目里的旧版插件。
+
+## 为什么有时打开的是旧版 Godot?
+
+新装的 Godot 和你电脑上原有的 Godot **共享同一份项目列表**(`%APPDATA%\Godot`),两边都能看到所有项目。但双击 `project.godot` 文件或用旧快捷方式启动的是旧版 exe。要确保用带 AI 的编辑器:
+
+- 认准开始菜单/桌面的 **“Godot AI Console”** 与 **“Godot (Project Manager)”** 快捷方式
+- 或在安装时勾选 **“Open .godot project files with Godot AI”** 文件关联(默认勾选),此后双击 `project.godot` 就会用新版编辑器打开
+
 ## 已知限制(v0.1)
 
 - 聊天面板需自备 API Key;外部 Agent 通道(Claude Code 等)不需要
