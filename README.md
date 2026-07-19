@@ -20,7 +20,8 @@
 - **资源/文件**:读写项目文件、生成占位纹理(无素材也能搭场景)、创建任意 Resource
 - **项目**:读写项目设置、注册输入映射、设置主场景
 - **运行调试**:运行/停止游戏、捕获运行时报错(closed loop:建→跑→读错→修)、编辑器视口截图
-- **组合命令**:`build_character_2d/3d`、`scaffold_level_2d`、`setup_ui_screen` —— 一条命令搭完整结构,一次 Ctrl+Z 整体撤销
+- **素材与动画**:搜索/下载 CC0 素材库(Poly Haven、ambientCG 全自动;Kenney/Quaternius/Mixamo 手动下载后一键导入)、精灵表切帧动画、glb 模型进场景、PBR 材质应用、程序化关键帧动画 —— 详见 [docs/asset-pipeline.md](docs/asset-pipeline.md)
+- **组合命令**:`build_character_2d/3d`(可直接用带动画的素材)、`scaffold_level_2d`、`setup_ui_screen` —— 一条命令搭完整结构,一次 Ctrl+Z 整体撤销
 - **安全**:所有修改可撤销;破坏性操作需在编辑器内批准;服务器仅监听 localhost
 
 ## 快速开始(开发者)

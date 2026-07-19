@@ -1,0 +1,82 @@
+{
+  "comment": "Curated CC0/free asset sources whose downloads require a browser (no stable hotlink API). search_assets returns these as download:'manual' — the user downloads the zip from the homepage, then import_asset_zip pulls it into the project. URLs are checked by CI.",
+  "entries": [
+    {
+      "id": "kenney-pixel-platformer",
+      "name": "Kenney Pixel Platformer",
+      "kind": "tileset",
+      "tags": ["2d", "pixel", "platformer", "tiles", "character"],
+      "license": "CC0",
+      "homepage": "https://kenney.nl/assets/pixel-platformer",
+      "source": "kenney",
+      "download": "manual",
+      "note": "Pixel-art platformer tiles + simple animated character sheets."
+    },
+    {
+      "id": "kenney-platformer-characters",
+      "name": "Kenney Platformer Characters",
+      "kind": "sprite",
+      "tags": ["2d", "character", "platformer", "spritesheet", "animation"],
+      "license": "CC0",
+      "homepage": "https://kenney.nl/assets/platformer-characters",
+      "source": "kenney",
+      "download": "manual",
+      "note": "Character spritesheets with walk/jump frames — slice with create_sprite_frames."
+    },
+    {
+      "id": "kenney-ui-pack",
+      "name": "Kenney UI Pack",
+      "kind": "ui",
+      "tags": ["2d", "ui", "buttons", "panels"],
+      "license": "CC0",
+      "homepage": "https://kenney.nl/assets/ui-pack",
+      "source": "kenney",
+      "download": "manual",
+      "note": "Buttons, panels, sliders for menus and HUDs."
+    },
+    {
+      "id": "kenney-impact-sounds",
+      "name": "Kenney Impact Sounds",
+      "kind": "audio",
+      "tags": ["audio", "sfx", "impact"],
+      "license": "CC0",
+      "homepage": "https://kenney.nl/assets/impact-sounds",
+      "source": "kenney",
+      "download": "manual",
+      "note": "Impact/hit sound effects (ogg)."
+    },
+    {
+      "id": "quaternius-ultimate-animated-character",
+      "name": "Quaternius Ultimate Animated Character Pack",
+      "kind": "character_animated",
+      "tags": ["3d", "character", "animated", "lowpoly", "gltf"],
+      "license": "CC0",
+      "homepage": "https://quaternius.com/packs/ultimatedanimatedcharacter.html",
+      "source": "quaternius",
+      "download": "manual",
+      "note": "Low-poly 3D characters with baked idle/walk/run/attack animations (glTF). After import, use add_model_to_scene."
+    },
+    {
+      "id": "quaternius-universal-animation-library",
+      "name": "Quaternius Universal Animation Library",
+      "kind": "character_animated",
+      "tags": ["3d", "animation", "library", "gltf"],
+      "license": "CC0",
+      "homepage": "https://quaternius.com/packs/universalanimationlibrary.html",
+      "source": "quaternius",
+      "download": "manual",
+      "note": "Large shared animation library for humanoid rigs."
+    },
+    {
+      "id": "mixamo",
+      "name": "Mixamo (Adobe) — auto-rig + animation library",
+      "kind": "character_animated",
+      "tags": ["3d", "character", "animation", "rigging", "humanoid"],
+      "license": "Free with Adobe account (check Adobe terms)",
+      "homepage": "https://www.mixamo.com",
+      "source": "mixamo",
+      "download": "manual",
+      "note": "Upload any humanoid model, auto-rig it and apply thousands of animations; export FBX/glTF, then import_asset_zip or drop the file into the project."
+    }
+  ]
+}
