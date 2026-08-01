@@ -47,7 +47,7 @@ func _run(params: Dictionary, ctx, async) -> void:
 			if folder_name == "":
 				folder_name = asset_id.to_snake_case()
 			var kind := String(params["kind"])
-			var resolved: Dictionary = await PolyHaven.new().resolve_download(downloader, asset_id, kind, String(params["resolution"])).resolved
+			var resolved: Dictionary = await PolyHaven.new().resolve_download(downloader, asset_id, kind, String(params["resolution"])).settled()
 			if not resolved.get("ok", false):
 				async.resolve(resolved)
 				return
@@ -55,12 +55,12 @@ func _run(params: Dictionary, ctx, async) -> void:
 			var items := []
 			for file_info in resolved["result"]["files"]:
 				items.append({"url": file_info["url"], "path": dest_dir.path_join(String(file_info["relpath"]))})
-			var downloaded: Dictionary = await downloader.fetch_all(items).resolved
+			var downloaded: Dictionary = await downloader.fetch_all(items).settled()
 			if not downloaded.get("ok", false):
 				async.resolve(downloaded)
 				return
 			Downloader.write_license_note(dest_dir, "Poly Haven", String(resolved["result"]["homepage"]), "CC0")
-			await downloader.rescan_and_wait().resolved
+			await downloader.rescan_and_wait().settled()
 			async.resolve(R.ok({
 				"dir": "res://assets/" + folder_name,
 				"files": _project_files(folder_name),
@@ -85,18 +85,18 @@ func _run(params: Dictionary, ctx, async) -> void:
 				await _download_zip(ctx, async, url, folder_name, url, url, "see source page")
 			else:
 				var dest := ProjectSettings.globalize_path("res://assets/%s/%s" % [folder_name, url.get_file()])
-				var fetched: Dictionary = await downloader.fetch(url, dest).resolved
+				var fetched: Dictionary = await downloader.fetch(url, dest).settled()
 				if not fetched.get("ok", false):
 					async.resolve(fetched)
 					return
-				await downloader.rescan_and_wait().resolved
+				await downloader.rescan_and_wait().settled()
 				async.resolve(R.ok({"dir": "res://assets/" + folder_name, "files": _project_files(folder_name)}))
 
 
 func _download_zip(ctx, async, url: String, folder_name: String, source_name: String, homepage: String, license_name: String) -> void:
 	var downloader: Node = ctx.plugin_part("downloader")
 	var tmp_zip := ProjectSettings.globalize_path("user://ai_console/tmp/%s.zip" % folder_name)
-	var fetched: Dictionary = await downloader.fetch(url, tmp_zip).resolved
+	var fetched: Dictionary = await downloader.fetch(url, tmp_zip).settled()
 	if not fetched.get("ok", false):
 		async.resolve(fetched)
 		return
@@ -107,7 +107,7 @@ func _download_zip(ctx, async, url: String, folder_name: String, source_name: St
 		async.resolve(extracted)
 		return
 	Downloader.write_license_note(dest_dir, source_name, homepage, license_name)
-	await downloader.rescan_and_wait().resolved
+	await downloader.rescan_and_wait().settled()
 	async.resolve(R.ok({
 		"dir": "res://assets/" + folder_name,
 		"files": _project_files(folder_name),

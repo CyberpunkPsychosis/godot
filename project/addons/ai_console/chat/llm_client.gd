@@ -9,9 +9,15 @@ extends RefCounted
 signal sse_event(data: Dictionary)
 signal finished(error_message: String)  # "" on success
 
+## Fail the request when NO progress (state change or received byte) happens
+## for this long — otherwise a hung connection freezes the chat turn.
+const STALL_TIMEOUT_MS := 60 * 1000
+
 var active := false
 
 var _http: HTTPClient
+var _last_progress_ms := 0
+var _last_status := -1
 var _host := ""
 var _port := 443
 var _use_tls := true
@@ -52,6 +58,8 @@ func start(url: String, headers: Dictionary, body: Dictionary) -> void:
 	if err != OK:
 		_finish("Could not connect to %s (error %d)." % [_host, err])
 		return
+	_last_progress_ms = Time.get_ticks_msec()
+	_last_status = -1
 	active = true
 
 
@@ -66,6 +74,13 @@ func poll() -> void:
 		return
 	_http.poll()
 	var status := _http.get_status()
+	if status != _last_status:
+		_last_status = status
+		_last_progress_ms = Time.get_ticks_msec()
+	elif Time.get_ticks_msec() - _last_progress_ms > STALL_TIMEOUT_MS:
+		_http.close()
+		_finish("No response from the API for %d seconds — check network/proxy/base URL and try again." % (STALL_TIMEOUT_MS / 1000))
+		return
 	match status:
 		HTTPClient.STATUS_RESOLVING, HTTPClient.STATUS_CONNECTING, HTTPClient.STATUS_REQUESTING:
 			pass
@@ -83,6 +98,7 @@ func poll() -> void:
 				_response_code = _http.get_response_code()
 			var chunk := _http.read_response_body_chunk()
 			if chunk.size() > 0:
+				_last_progress_ms = Time.get_ticks_msec()
 				if _response_code >= 400:
 					_error_body += chunk.get_string_from_utf8()
 				else:

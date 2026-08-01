@@ -38,6 +38,8 @@ func _ready() -> void:
 	tool_loop.run_failed.connect(_on_run_failed)
 	registry.command_executed.connect(_on_command_executed)
 	registry.approval_requested.connect(_on_approval_requested)
+	if registry.has_signal("command_started"):
+		registry.command_started.connect(_on_command_started)
 	_refresh_status()
 	_append_system("AI Console ready. Chat here, or connect an external agent (Claude Code, Cursor...) over MCP — see the README. Type your request and press Enter.")
 
@@ -190,7 +192,21 @@ func _on_open_settings() -> void:
 # --- activity log (both built-in chat and external MCP clients) --------------
 
 
+var _running_label: RichTextLabel = null
+
+
+func _on_command_started(command_name: String, params: Dictionary) -> void:
+	var args := JSON.stringify(params)
+	if args.length() > 100:
+		args = args.left(100) + "…"
+	_running_label = _append_message("", "⏳ %s %s — 执行中…" % [command_name, args], Color(0.75, 0.72, 0.5))
+	_running_label.add_theme_font_size_override("normal_font_size", 12)
+
+
 func _on_command_executed(command_name: String, params: Dictionary, result: Dictionary) -> void:
+	if _running_label != null and is_instance_valid(_running_label):
+		_running_label.queue_free()
+	_running_label = null
 	var args := JSON.stringify(params)
 	if args.length() > 120:
 		args = args.left(120) + "…"

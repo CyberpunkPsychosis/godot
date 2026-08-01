@@ -123,7 +123,7 @@ func _await_pending(pending) -> Dictionary:
 			"The tool did not finish within %d seconds (it may have crashed — check the editor Output panel — or a download/approval is stuck). The chat continues; retry or try another approach." % int(TOOL_CALL_TIMEOUT_SECONDS)))
 	)
 	_waiter = waiter
-	var result: Dictionary = await waiter.resolved
+	var result: Dictionary = await waiter.settled()
 	_waiter = null
 	return result
 

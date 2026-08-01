@@ -7,6 +7,9 @@ extends RefCounted
 const R := preload("res://addons/ai_console/core/command_result.gd")
 const Schema := preload("res://addons/ai_console/core/json_schema.gd")
 
+## Fired right before a command runs — lets the UI show a live "running…"
+## indicator (long downloads/searches previously looked like a freeze).
+signal command_started(command_name: String, params: Dictionary)
 signal command_executed(command_name: String, params: Dictionary, result: Dictionary)
 ## request = {"command": String, "params": Dictionary, "approval": AsyncResult}
 ## The UI resolves `approval` with {"approved": bool}.
@@ -112,6 +115,7 @@ func _request_approval(cmd, params: Dictionary) -> Dictionary:
 
 
 func _execute(cmd, params: Dictionary) -> Dictionary:
+	command_started.emit(cmd.name, params)
 	var result: Dictionary = cmd.execute(params, ctx)
 	if result.has("__pending"):
 		result["__pending"].resolved.connect(func(r: Dictionary) -> void:
