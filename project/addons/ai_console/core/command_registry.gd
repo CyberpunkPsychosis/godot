@@ -111,6 +111,13 @@ func _request_approval(cmd, params: Dictionary) -> Dictionary:
 				"The user denied the '%s' operation. Explain what you wanted to do and ask how to proceed." % cmd.name))
 	)
 	approval_requested.emit({"command": cmd.name, "params": params, "approval": approval})
+	# Registry-side auto-deny so MCP callers get an answer even if no UI is
+	# listening (the dock has its own 60s toast timeout; resolve() is
+	# idempotent so double-deny is harmless).
+	if ctx != null and ctx.plugin != null and ctx.plugin.is_inside_tree():
+		ctx.plugin.get_tree().create_timer(90.0).timeout.connect(func() -> void:
+			approval.resolve({"approved": false})
+		)
 	return {"__pending": pending}
 
 

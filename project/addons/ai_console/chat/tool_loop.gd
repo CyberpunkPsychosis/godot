@@ -34,6 +34,11 @@ var busy := false
 var _client  # LLMClient
 var _abort := false
 var _waiter  # AsyncResult the loop is currently blocked on (for abort)
+## Bumped by reset(); a suspended run() compares its captured value after each
+## await so a "New chat" during a running turn can't write into the fresh
+## history (which would start the new conversation with an assistant message
+## and 400 on the next send).
+var _generation := 0
 
 
 func poll() -> void:
@@ -42,6 +47,7 @@ func poll() -> void:
 
 
 func reset() -> void:
+	_generation += 1
 	messages.clear()
 
 
@@ -59,6 +65,7 @@ func run(user_text: String, settings: Dictionary) -> void:
 		return
 	busy = true
 	_abort = false
+	var generation := _generation
 	_trim_history()
 	_repair_history()
 	messages.append({"role": "user", "content": [{"type": "text", "text": user_text}]})
@@ -75,6 +82,10 @@ func run(user_text: String, settings: Dictionary) -> void:
 			return
 		turn_started.emit()
 		var turn := await _stream_turn(provider, settings, tools)
+		if generation != _generation:
+			busy = false
+			run_finished.emit("aborted")
+			return
 		if turn.has("error"):
 			busy = false
 			run_failed.emit(String(turn["error"]))
@@ -90,11 +101,16 @@ func run(user_text: String, settings: Dictionary) -> void:
 				"input": tool_use["input"],
 			})
 		if assistant_content.is_empty():
-			assistant_content.append({"type": "text", "text": ""})
+			# Nothing usable arrived (e.g. Stop before the first token). Don't
+			# store an assistant message at all — Anthropic rejects empty text
+			# blocks and would 400 every later request.
+			busy = false
+			run_finished.emit("aborted" if _abort else "end_turn")
+			return
 		messages.append({"role": "assistant", "content": assistant_content})
 		if turn["tool_uses"].is_empty():
 			busy = false
-			run_finished.emit("end_turn")
+			run_finished.emit("aborted" if _abort else "end_turn")
 			return
 		var results_content := []
 		for tool_use in turn["tool_uses"]:
@@ -112,6 +128,10 @@ func run(user_text: String, settings: Dictionary) -> void:
 				"tool_use_id": tool_use["id"],
 				"content": _truncate(result),
 			})
+		if generation != _generation:
+			busy = false
+			run_finished.emit("aborted")
+			return
 		messages.append({"role": "user", "content": results_content})
 	busy = false
 	run_finished.emit("max_iterations")
@@ -211,6 +231,21 @@ func _truncate(result: Dictionary) -> String:
 ## tool_result in the following message (older builds produced this when Stop
 ## interrupted the tool loop; the API then 400s on every later request).
 func _repair_history() -> void:
+	# Pass 1: strip empty text blocks (the API rejects them); drop assistant
+	# messages left with no content at all.
+	var cleaned := []
+	for msg in messages:
+		var content := []
+		for block in msg.get("content", []):
+			if String(block.get("type", "")) == "text" and String(block.get("text", "")) == "":
+				continue
+			content.append(block)
+		if content.is_empty():
+			continue
+		msg["content"] = content
+		cleaned.append(msg)
+	messages = cleaned
+	# Pass 2: ensure every assistant tool_use has a matching tool_result.
 	var i := 0
 	while i < messages.size():
 		var msg: Dictionary = messages[i]

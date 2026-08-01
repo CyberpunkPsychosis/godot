@@ -30,6 +30,7 @@ func build_request(cfg: Dictionary, system_prompt: String, messages: Array, tool
 	var body := {
 		"model": String(cfg["model"]),
 		"stream": true,
+		"max_tokens": int(cfg.get("max_tokens", 4096)),
 		"messages": api_messages,
 	}
 	if not api_tools.is_empty():
@@ -86,14 +87,19 @@ func begin() -> void:
 
 func on_sse(data: Dictionary) -> Array:
 	var events := []
-	var choices: Array = data.get("choices", [])
-	if choices.is_empty():
-		if data.has("error"):
-			var err: Dictionary = data.get("error", {})
+	# Some servers send "choices": null (usage/content-filter chunks) — fetch
+	# as Variant so a typed-Array assignment can't blow up mid-stream.
+	var choices: Variant = data.get("choices")
+	if typeof(choices) != TYPE_ARRAY or (choices as Array).is_empty():
+		if typeof(data.get("error")) == TYPE_DICTIONARY:
+			var err: Dictionary = data["error"]
 			events.append({"type": "error", "message": String(err.get("message", "unknown API error"))})
 		return events
+	if typeof(choices[0]) != TYPE_DICTIONARY:
+		return events
 	var choice: Dictionary = choices[0]
-	var delta: Dictionary = choice.get("delta", {})
+	var delta_variant: Variant = choice.get("delta")
+	var delta: Dictionary = delta_variant if typeof(delta_variant) == TYPE_DICTIONARY else {}
 	var content: Variant = delta.get("content")
 	if typeof(content) == TYPE_STRING and String(content) != "":
 		events.append({"type": "text", "text": String(content)})

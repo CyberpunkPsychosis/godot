@@ -29,7 +29,7 @@ static func decode(value: Variant, obj: Object, prop: String) -> Dictionary:
 	match typeof(value):
 		TYPE_STRING:
 			var text: String = value
-			if text.begins_with("res://"):
+			if text.begins_with("res://") and target != TYPE_STRING:
 				if ResourceLoader.exists(text):
 					decoded = load(text)
 				elif target == TYPE_OBJECT:

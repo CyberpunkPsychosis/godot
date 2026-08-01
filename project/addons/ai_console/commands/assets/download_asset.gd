@@ -79,12 +79,15 @@ func _run(params: Dictionary, ctx, async) -> void:
 			if not url.begins_with("http"):
 				async.resolve(R.err("SCHEMA_INVALID", "source=url requires a valid 'url'."))
 				return
+			# Signed URLs carry query strings — strip them for filename and
+			# extension decisions (also '?' is invalid in Windows filenames).
+			var clean_path := url.split("?")[0].split("#")[0]
 			if folder_name == "":
-				folder_name = url.get_file().get_basename().to_snake_case()
-			if url.get_extension().to_lower() == "zip":
+				folder_name = clean_path.get_file().get_basename().to_snake_case()
+			if clean_path.get_extension().to_lower() == "zip":
 				await _download_zip(ctx, async, url, folder_name, url, url, "see source page")
 			else:
-				var dest := ProjectSettings.globalize_path("res://assets/%s/%s" % [folder_name, url.get_file()])
+				var dest := ProjectSettings.globalize_path("res://assets/%s/%s" % [folder_name, clean_path.get_file()])
 				var fetched: Dictionary = await downloader.fetch(url, dest).settled()
 				if not fetched.get("ok", false):
 					async.resolve(fetched)
