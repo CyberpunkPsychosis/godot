@@ -35,4 +35,8 @@ else
   echo "python3 missing; skipping zip fixtures"
 fi
 
+echo "== sample game: super_delivery =="
+"$GODOT_BIN" --headless --import --path "$REPO_ROOT/games/super_delivery"
+"$GODOT_BIN" --headless --path "$REPO_ROOT/games/super_delivery" --script res://tests/load_check.gd
+
 echo "OK"
