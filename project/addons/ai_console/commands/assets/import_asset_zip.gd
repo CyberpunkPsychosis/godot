@@ -44,7 +44,7 @@ func _run(params: Dictionary, ctx, async) -> void:
 	Downloader.write_license_note(dest_dir, "manual import", zip_path, "see source page")
 	var plugin_downloader: Variant = ctx.plugin_part("downloader")
 	if plugin_downloader != null:
-		await plugin_downloader.rescan_and_wait().resolved
+		await plugin_downloader.rescan_and_wait().settled()
 	else:
 		EditorInterface.get_resource_filesystem().scan()
 	var files := []

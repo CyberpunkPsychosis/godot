@@ -34,10 +34,13 @@ func _ready() -> void:
 	tool_loop.registry = registry
 	tool_loop.plugin = plugin
 	tool_loop.text_delta.connect(_on_text_delta)
+	tool_loop.turn_started.connect(_on_turn_started)
 	tool_loop.run_finished.connect(_on_run_finished)
 	tool_loop.run_failed.connect(_on_run_failed)
 	registry.command_executed.connect(_on_command_executed)
 	registry.approval_requested.connect(_on_approval_requested)
+	if registry.has_signal("command_started"):
+		registry.command_started.connect(_on_command_started)
 	_refresh_status()
 	_append_system("AI Console ready. Chat here, or connect an external agent (Claude Code, Cursor...) over MCP — see the README. Type your request and press Enter.")
 
@@ -150,7 +153,23 @@ func _send() -> void:
 	tool_loop.run(text, settings)
 
 
+var _thinking_label: RichTextLabel = null
+
+
+func _on_turn_started() -> void:
+	_clear_thinking()
+	_thinking_label = _append_message("", "🤖 思考中… (waiting for the model)", Color(0.6, 0.6, 0.68))
+	_thinking_label.add_theme_font_size_override("normal_font_size", 12)
+
+
+func _clear_thinking() -> void:
+	if _thinking_label != null and is_instance_valid(_thinking_label):
+		_thinking_label.queue_free()
+	_thinking_label = null
+
+
 func _on_text_delta(text: String) -> void:
+	_clear_thinking()
 	if _current_assistant_label == null:
 		_current_assistant_label = _append_message("AI", "", Color(0.7, 1.0, 0.75))
 	_current_assistant_label.add_text(text)
@@ -158,6 +177,7 @@ func _on_text_delta(text: String) -> void:
 
 
 func _on_run_finished(reason: String) -> void:
+	_clear_thinking()
 	_send_button.disabled = false
 	_stop_button.disabled = true
 	_current_assistant_label = null
@@ -168,6 +188,7 @@ func _on_run_finished(reason: String) -> void:
 
 
 func _on_run_failed(message: String) -> void:
+	_clear_thinking()
 	_send_button.disabled = false
 	_stop_button.disabled = true
 	_current_assistant_label = null
@@ -190,7 +211,22 @@ func _on_open_settings() -> void:
 # --- activity log (both built-in chat and external MCP clients) --------------
 
 
+var _running_label: RichTextLabel = null
+
+
+func _on_command_started(command_name: String, params: Dictionary) -> void:
+	_clear_thinking()
+	var args := JSON.stringify(params)
+	if args.length() > 100:
+		args = args.left(100) + "…"
+	_running_label = _append_message("", "⏳ %s %s — 执行中…" % [command_name, args], Color(0.75, 0.72, 0.5))
+	_running_label.add_theme_font_size_override("normal_font_size", 12)
+
+
 func _on_command_executed(command_name: String, params: Dictionary, result: Dictionary) -> void:
+	if _running_label != null and is_instance_valid(_running_label):
+		_running_label.queue_free()
+	_running_label = null
 	var args := JSON.stringify(params)
 	if args.length() > 120:
 		args = args.left(120) + "…"

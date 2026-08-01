@@ -73,7 +73,9 @@ func _fetch_all_from(items: Array, index: int, done: Array, async: RefCounted) -
 func fetch_json(url: String) -> RefCounted:
 	var async := AsyncResult.new()
 	var request := HTTPRequest.new()
-	request.timeout = 30.0
+	# Kept short: these are API queries, and in regions where a source is
+	# unreachable this timeout bounds how long search_assets appears "stuck".
+	request.timeout = 10.0
 	request.body_size_limit = 32 * 1024 * 1024
 	add_child(request)
 	request.request_completed.connect(func(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:

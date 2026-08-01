@@ -42,29 +42,30 @@ func _run(params: Dictionary, ctx, async) -> void:
 	var entries := _search_index(query, kind)
 	var errors := []
 
+	# Fire all network sources in PARALLEL, then collect — worst case is one
+	# API timeout (~10s), not the sum of all of them.
+	var lookups := []  # [{label, async}]
 	if kind in ["any", "model", "material", "hdri"]:
 		if _polyhaven == null:
 			_polyhaven = PolyHaven.new()
 		var ph_kinds := ["model", "material", "hdri"] if kind == "any" else [kind]
 		for ph_kind in ph_kinds:
-			var ph_result: Dictionary = await _polyhaven.search(downloader, query, ph_kind, limit).resolved
-			if ph_result.get("ok", false):
-				entries.append_array(ph_result["result"]["entries"])
-			else:
-				errors.append("polyhaven: " + String(ph_result["error"]["message"]))
-
+			lookups.append({"label": "polyhaven/" + ph_kind, "async": _polyhaven.search(downloader, query, ph_kind, limit)})
 	if kind in ["any", "material"]:
-		var acg_result: Dictionary = await AmbientCG.new().search(downloader, query, limit).resolved
-		if acg_result.get("ok", false):
-			entries.append_array(acg_result["result"]["entries"])
+		lookups.append({"label": "ambientcg", "async": AmbientCG.new().search(downloader, query, limit)})
+	for lookup in lookups:
+		var lookup_result: Dictionary = await lookup["async"].settled()
+		if lookup_result.get("ok", false):
+			entries.append_array(lookup_result["result"]["entries"])
 		else:
-			errors.append("ambientcg: " + String(acg_result["error"]["message"]))
+			errors.append("%s: %s" % [lookup["label"], String(lookup_result["error"]["message"])])
 
 	var result := {
 		"entries": entries,
 		"note": "All CC0 unless stated. Auto-download entries with download_asset; download:'manual' entries: send the user the homepage link, they download the zip, then call import_asset_zip with the local file path.",
 	}
 	if not errors.is_empty():
+		errors.append("Some online sources were unreachable (common behind restrictive networks) — rely on the curated manual-download entries instead.")
 		result["source_errors"] = errors
 	async.resolve(R.ok(result))
 
