@@ -33,7 +33,10 @@ func execute(params: Dictionary, ctx) -> Dictionary:
 
 func _run(params: Dictionary, ctx, async) -> void:
 	var source := String(params["source"])
-	var downloader: Node = ctx.plugin.downloader
+	var downloader: Variant = ctx.plugin_part("downloader")
+	if downloader == null:
+		async.resolve(ctx.stale_plugin_error("downloader"))
+		return
 	var asset_id := String(params.get("id", ""))
 	var folder_name := String(params.get("name", ""))
 	match source:
@@ -91,7 +94,7 @@ func _run(params: Dictionary, ctx, async) -> void:
 
 
 func _download_zip(ctx, async, url: String, folder_name: String, source_name: String, homepage: String, license_name: String) -> void:
-	var downloader: Node = ctx.plugin.downloader
+	var downloader: Node = ctx.plugin_part("downloader")
 	var tmp_zip := ProjectSettings.globalize_path("user://ai_console/tmp/%s.zip" % folder_name)
 	var fetched: Dictionary = await downloader.fetch(url, tmp_zip).resolved
 	if not fetched.get("ok", false):

@@ -17,7 +17,7 @@ func _init() -> void:
 
 
 func execute(params: Dictionary, ctx) -> Dictionary:
-	var dock = ctx.plugin.dock
+	var dock: Variant = ctx.plugin_part("dock")
 	if dock == null:
 		return R.err("UNAVAILABLE", "The AI Console panel is not available.")
 	dock.notify(String(params["message"]), String(params["level"]))

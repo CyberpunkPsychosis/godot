@@ -81,5 +81,20 @@ func make_async() -> RefCounted:
 	return AsyncResult.new()
 
 
+## Fetches a plugin subsystem (downloader / log_tail / dock) tolerantly:
+## returns null instead of crashing when the running plugin instance predates
+## the subsystem (stale in-memory plugin after an addon update).
+func plugin_part(part: String) -> Variant:
+	if plugin == null:
+		return null
+	return plugin.get(part)
+
+
+## Shared error for the stale-plugin case, with recovery instructions.
+func stale_plugin_error(part: String) -> Dictionary:
+	return R.err("PLUGIN_OUTDATED",
+		"The running AI Console plugin predates '%s' (addon files were updated while the editor was running). Tell the user to restart Godot; if the error persists, run 'Add AI Console to a Project' on this project and restart again." % part)
+
+
 func summarize_node(node: Node) -> Dictionary:
 	return {"path": node_path(node), "name": String(node.name), "type": node.get_class()}
