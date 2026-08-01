@@ -62,7 +62,10 @@ func execute(params: Dictionary, ctx) -> Dictionary:
 			notes.append("player_scene '%s' could not be loaded; skipped." % player_scene)
 		else:
 			var player := packed.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE)
-			player.position = spawn.position
+			if player is Node2D:
+				(player as Node2D).position = spawn.position
+			else:
+				notes.append("player_scene root is %s (not Node2D); placed without position." % player.get_class())
 			parent.add_child(player, true)
 			ctx.ops.set_owner_recursive(player, root)
 			ctx.record_node_added(parent, player)

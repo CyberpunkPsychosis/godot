@@ -89,6 +89,9 @@ func _build_ui() -> void:
 
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# Without this, long messages widen the row into a horizontal scrollbar
+	# instead of word-wrapping.
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_messages = VBoxContainer.new()
 	_messages.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_messages.add_theme_constant_override("separation", 6)

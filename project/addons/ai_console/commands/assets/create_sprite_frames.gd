@@ -21,7 +21,13 @@ func _init() -> void:
 
 
 func is_destructive(params: Dictionary, _ctx) -> bool:
-	return FileAccess.file_exists(String(params.get("save_path", "")))
+	var save_path := String(params.get("save_path", ""))
+	if save_path == "":
+		var texture := String(params.get("texture", ""))
+		if texture == "":
+			return false
+		save_path = texture.get_base_dir().path_join(texture.get_file().get_basename() + "_frames.tres")
+	return FileAccess.file_exists(save_path)
 
 
 func execute(params: Dictionary, ctx) -> Dictionary:
