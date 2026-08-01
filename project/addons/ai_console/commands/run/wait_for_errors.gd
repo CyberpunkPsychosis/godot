@@ -16,7 +16,7 @@ func _init() -> void:
 
 
 func execute(params: Dictionary, ctx) -> Dictionary:
-	var tail = ctx.plugin.log_tail
+	var tail: Variant = ctx.plugin_part("log_tail")
 	if tail == null:
 		return R.err("UNAVAILABLE", "Log capture is not active.")
 	var async = ctx.make_async()

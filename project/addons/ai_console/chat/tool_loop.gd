@@ -13,10 +13,16 @@ signal run_failed(message: String)
 const LLMClient := preload("res://addons/ai_console/chat/llm_client.gd")
 const AnthropicProvider := preload("res://addons/ai_console/chat/providers/anthropic.gd")
 const OpenAIProvider := preload("res://addons/ai_console/chat/providers/openai_compat.gd")
+const AsyncResult := preload("res://addons/ai_console/core/async_result.gd")
+const R := preload("res://addons/ai_console/core/command_result.gd")
 
 const MAX_ITERATIONS := 25
 const TOOL_RESULT_MAX_CHARS := 4000
 const HISTORY_MAX_MESSAGES := 40
+## A tool whose AsyncResult never resolves (crashed coroutine, hung download,
+## unanswered approval) must not brick the chat: after this many seconds the
+## loop continues with an error result instead of waiting forever.
+const TOOL_CALL_TIMEOUT_SECONDS := 180.0
 
 var registry  # command_registry.gd
 var plugin: EditorPlugin
@@ -25,6 +31,7 @@ var busy := false
 
 var _client  # LLMClient
 var _abort := false
+var _waiter  # AsyncResult the loop is currently blocked on (for abort)
 
 
 func poll() -> void:
@@ -40,6 +47,8 @@ func abort() -> void:
 	_abort = true
 	if _client != null and _client.active:
 		_client.abort()
+	if _waiter != null:
+		_waiter.resolve(R.err("ABORTED", "Stopped by the user."))
 
 
 func run(user_text: String, settings: Dictionary) -> void:
@@ -90,7 +99,7 @@ func run(user_text: String, settings: Dictionary) -> void:
 				break
 			var result: Dictionary = registry.call_command(String(tool_use["name"]), tool_use["input"])
 			if result.has("__pending"):
-				result = await result["__pending"].resolved
+				result = await _await_pending(result["__pending"])
 			results_content.append({
 				"type": "tool_result",
 				"tool_use_id": tool_use["id"],
@@ -99,6 +108,24 @@ func run(user_text: String, settings: Dictionary) -> void:
 		messages.append({"role": "user", "content": results_content})
 	busy = false
 	run_finished.emit("max_iterations")
+
+
+## Awaits a pending tool result with a timeout and abort support, so a
+## crashed/hung tool cannot freeze the chat (the Send button used to stay
+## disabled forever in that case).
+func _await_pending(pending) -> Dictionary:
+	var waiter := AsyncResult.new()
+	pending.resolved.connect(func(res: Dictionary) -> void:
+		waiter.resolve(res)
+	)
+	plugin.get_tree().create_timer(TOOL_CALL_TIMEOUT_SECONDS).timeout.connect(func() -> void:
+		waiter.resolve(R.err("TOOL_TIMEOUT",
+			"The tool did not finish within %d seconds (it may have crashed — check the editor Output panel — or a download/approval is stuck). The chat continues; retry or try another approach." % int(TOOL_CALL_TIMEOUT_SECONDS)))
+	)
+	_waiter = waiter
+	var result: Dictionary = await waiter.resolved
+	_waiter = null
+	return result
 
 
 func _stream_turn(provider, settings: Dictionary, tools: Array) -> Dictionary:

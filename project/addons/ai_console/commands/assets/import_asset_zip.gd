@@ -42,7 +42,11 @@ func _run(params: Dictionary, ctx, async) -> void:
 		async.resolve(extracted)
 		return
 	Downloader.write_license_note(dest_dir, "manual import", zip_path, "see source page")
-	await ctx.plugin.downloader.rescan_and_wait().resolved
+	var plugin_downloader: Variant = ctx.plugin_part("downloader")
+	if plugin_downloader != null:
+		await plugin_downloader.rescan_and_wait().resolved
+	else:
+		EditorInterface.get_resource_filesystem().scan()
 	var files := []
 	for file_path in extracted["result"]["files"]:
 		files.append("res://assets/" + folder_name + "/" + String(file_path).trim_prefix(dest_dir).trim_prefix("/"))

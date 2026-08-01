@@ -93,6 +93,11 @@ AI 控制台是**按项目安装的编辑器插件**——只有装了插件的�
 - 认准开始菜单/桌面的 **“Godot AI Console”** 与 **“Godot (Project Manager)”** 快捷方式
 - 或在安装时勾选 **“Open .godot project files with Godot AI”** 文件关联(默认勾选),此后双击 `project.godot` 就会用新版编辑器打开
 
+## 故障排查
+
+- **升级安装包后报 `Invalid access to property ... on EditorPlugin` / 命令报 PLUGIN_OUTDATED**:项目里的插件文件和内存中运行的旧代码混载了。重启 Godot 即可;仍不行就运行开始菜单 "Add AI Console to a Project" 选中该项目刷新插件,再重启。(新版安装包已自动更新自带项目的插件)
+- **发送按钮卡灰**:旧版在工具崩溃时会卡死聊天;新版已加 180 秒超时自动恢复,Stop 按钮也可强制解锁。遇到时重启 Godot 并升级安装包。
+
 ## 已知限制(v0.1)
 
 - 聊天面板需自备 API Key;外部 Agent 通道(Claude Code 等)不需要

@@ -36,6 +36,11 @@ Source: "staging\tools\*"; DestDir: "{app}\tools"; Flags: ignoreversion recurses
 ; the user's documents on install; never overwritten, never uninstalled.
 Source: "staging\template\*"; DestDir: "{userdocs}\GodotAI\MyFirstAIProject"; \
   Flags: recursesubdirs onlyifdoesntexist uninsneveruninstall
+; On upgrades the template project already exists (onlyifdoesntexist skips it),
+; so refresh just its addon — otherwise old plugin code meets new commands and
+; breaks. User scenes/scripts/assets are untouched.
+Source: "staging\addon\*"; DestDir: "{userdocs}\GodotAI\MyFirstAIProject\addons"; \
+  Flags: recursesubdirs uninsneveruninstall
 
 [Icons]
 Name: "{group}\Godot AI Console"; Filename: "{app}\Godot_v{#GodotVer}_win64.exe"; \

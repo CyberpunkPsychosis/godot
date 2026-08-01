@@ -35,7 +35,10 @@ func _run(params: Dictionary, ctx, async) -> void:
 	var query := String(params["query"])
 	var kind := String(params["kind"])
 	var limit := clampi(int(params["limit"]), 1, 25)
-	var downloader: Node = ctx.plugin.downloader
+	var downloader: Variant = ctx.plugin_part("downloader")
+	if downloader == null:
+		async.resolve(ctx.stale_plugin_error("downloader"))
+		return
 	var entries := _search_index(query, kind)
 	var errors := []
 
