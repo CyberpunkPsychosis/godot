@@ -22,7 +22,9 @@ const HISTORY_MAX_MESSAGES := 40
 ## A tool whose AsyncResult never resolves (crashed coroutine, hung download,
 ## unanswered approval) must not brick the chat: after this many seconds the
 ## loop continues with an error result instead of waiting forever.
-const TOOL_CALL_TIMEOUT_SECONDS := 180.0
+## Kept slightly ABOVE the downloader's own request timeout so slow-but-alive
+## downloads fail with their own specific error, not a generic tool timeout.
+const TOOL_CALL_TIMEOUT_SECONDS := 330.0
 
 var registry  # command_registry.gd
 var plugin: EditorPlugin

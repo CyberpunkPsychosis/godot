@@ -8,7 +8,9 @@ const R := preload("res://addons/ai_console/core/command_result.gd")
 const AsyncResult := preload("res://addons/ai_console/core/async_result.gd")
 
 const MAX_DOWNLOAD_BYTES := 200 * 1024 * 1024
-const REQUEST_TIMEOUT := 180.0
+## Total time budget for one file download; generous because asset packs can
+## be tens of MB on slow connections. The chat's tool timeout sits above this.
+const REQUEST_TIMEOUT := 300.0
 
 
 ## Downloads one URL to an absolute file path. Resolves {ok, result:{path, bytes}}.
