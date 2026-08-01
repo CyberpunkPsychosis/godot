@@ -58,6 +58,7 @@ func run(user_text: String, settings: Dictionary) -> void:
 	busy = true
 	_abort = false
 	_trim_history()
+	_repair_history()
 	messages.append({"role": "user", "content": [{"type": "text", "text": user_text}]})
 	var provider: RefCounted
 	if String(settings["provider"]) == "anthropic":
@@ -95,11 +96,15 @@ func run(user_text: String, settings: Dictionary) -> void:
 			return
 		var results_content := []
 		for tool_use in turn["tool_uses"]:
+			# Even when aborted, EVERY tool_use must get a tool_result — the
+			# API rejects the whole conversation otherwise (HTTP 400).
+			var result: Dictionary
 			if _abort:
-				break
-			var result: Dictionary = registry.call_command(String(tool_use["name"]), tool_use["input"])
-			if result.has("__pending"):
-				result = await _await_pending(result["__pending"])
+				result = R.err("ABORTED", "Stopped by the user before this tool ran.")
+			else:
+				result = registry.call_command(String(tool_use["name"]), tool_use["input"])
+				if result.has("__pending"):
+					result = await _await_pending(result["__pending"])
 			results_content.append({
 				"type": "tool_result",
 				"tool_use_id": tool_use["id"],
@@ -198,6 +203,43 @@ func _truncate(result: Dictionary) -> String:
 	if text.length() > TOOL_RESULT_MAX_CHARS:
 		return text.left(TOOL_RESULT_MAX_CHARS) + "...(truncated)"
 	return text
+
+
+## Heals conversations where an assistant tool_use has no matching
+## tool_result in the following message (older builds produced this when Stop
+## interrupted the tool loop; the API then 400s on every later request).
+func _repair_history() -> void:
+	var i := 0
+	while i < messages.size():
+		var msg: Dictionary = messages[i]
+		if String(msg.get("role", "")) == "assistant":
+			var pending_ids := []
+			for block in msg.get("content", []):
+				if String(block.get("type", "")) == "tool_use":
+					pending_ids.append(String(block.get("id", "")))
+			if not pending_ids.is_empty():
+				var next: Dictionary = messages[i + 1] if i + 1 < messages.size() else {}
+				var answered := {}
+				var next_has_results := false
+				if String(next.get("role", "")) == "user":
+					for block in next.get("content", []):
+						if String(block.get("type", "")) == "tool_result":
+							next_has_results = true
+							answered[String(block.get("tool_use_id", ""))] = true
+				var stubs := []
+				for tool_id in pending_ids:
+					if not answered.has(tool_id):
+						stubs.append({
+							"type": "tool_result",
+							"tool_use_id": tool_id,
+							"content": JSON.stringify(R.err("ABORTED", "Interrupted by the user; no result was produced.")),
+						})
+				if not stubs.is_empty():
+					if next_has_results:
+						next["content"].append_array(stubs)
+					else:
+						messages.insert(i + 1, {"role": "user", "content": stubs})
+		i += 1
 
 
 func _trim_history() -> void:
