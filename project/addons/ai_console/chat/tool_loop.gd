@@ -170,10 +170,13 @@ func _stream_turn(provider, settings: Dictionary, tools: Array) -> Dictionary:
 
 
 func _system_prompt() -> String:
+	# Executed directly (not via call_command) so this internal housekeeping
+	# call doesn't spam the activity log with a confusing "get_editor_state".
 	var state := "unknown"
-	var state_result: Dictionary = registry.call_command("get_editor_state", {}, true)
-	if state_result.get("ok", false):
-		state = JSON.stringify(state_result["result"])
+	if registry.commands.has("get_editor_state"):
+		var state_result: Dictionary = registry.commands["get_editor_state"].execute({}, registry.ctx)
+		if state_result.get("ok", false):
+			state = JSON.stringify(state_result["result"])
 	return (
 		"You are the AI assistant embedded in the Godot editor's AI Console panel. " +
 		"You operate the LIVE editor the user is looking at, through tools.\n\n" +

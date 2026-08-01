@@ -34,6 +34,7 @@ func _ready() -> void:
 	tool_loop.registry = registry
 	tool_loop.plugin = plugin
 	tool_loop.text_delta.connect(_on_text_delta)
+	tool_loop.turn_started.connect(_on_turn_started)
 	tool_loop.run_finished.connect(_on_run_finished)
 	tool_loop.run_failed.connect(_on_run_failed)
 	registry.command_executed.connect(_on_command_executed)
@@ -152,7 +153,23 @@ func _send() -> void:
 	tool_loop.run(text, settings)
 
 
+var _thinking_label: RichTextLabel = null
+
+
+func _on_turn_started() -> void:
+	_clear_thinking()
+	_thinking_label = _append_message("", "🤖 思考中… (waiting for the model)", Color(0.6, 0.6, 0.68))
+	_thinking_label.add_theme_font_size_override("normal_font_size", 12)
+
+
+func _clear_thinking() -> void:
+	if _thinking_label != null and is_instance_valid(_thinking_label):
+		_thinking_label.queue_free()
+	_thinking_label = null
+
+
 func _on_text_delta(text: String) -> void:
+	_clear_thinking()
 	if _current_assistant_label == null:
 		_current_assistant_label = _append_message("AI", "", Color(0.7, 1.0, 0.75))
 	_current_assistant_label.add_text(text)
@@ -160,6 +177,7 @@ func _on_text_delta(text: String) -> void:
 
 
 func _on_run_finished(reason: String) -> void:
+	_clear_thinking()
 	_send_button.disabled = false
 	_stop_button.disabled = true
 	_current_assistant_label = null
@@ -170,6 +188,7 @@ func _on_run_finished(reason: String) -> void:
 
 
 func _on_run_failed(message: String) -> void:
+	_clear_thinking()
 	_send_button.disabled = false
 	_stop_button.disabled = true
 	_current_assistant_label = null
@@ -196,6 +215,7 @@ var _running_label: RichTextLabel = null
 
 
 func _on_command_started(command_name: String, params: Dictionary) -> void:
+	_clear_thinking()
 	var args := JSON.stringify(params)
 	if args.length() > 100:
 		args = args.left(100) + "…"

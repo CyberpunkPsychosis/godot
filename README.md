@@ -93,6 +93,10 @@ AI 控制台是**按项目安装的编辑器插件**——只有装了插件的�
 - 认准开始菜单/桌面的 **“Godot AI Console”** 与 **“Godot (Project Manager)”** 快捷方式
 - 或在安装时勾选 **“Open .godot project files with Godot AI”** 文件关联(默认勾选),此后双击 `project.godot` 就会用新版编辑器打开
 
+## 国内网络用户必读
+
+内置聊天直连 `api.anthropic.com` / `api.openai.com` 在中国大陆网络下**不通**,表现为发消息后一直没有回复。解决:面板 **Settings → Preset** 选择国内可直连的模型服务(推荐 **DeepSeek**,便宜且工具调用能力好;也有 Kimi/智谱/通义/本地 Ollama 预设),填对应平台的 API Key 即可。外部 Claude Code 通道不受此影响(它自己管理网络)。
+
 ## 故障排查
 
 - **升级安装包后报 `Invalid access to property ... on EditorPlugin` / 命令报 PLUGIN_OUTDATED**:项目里的插件文件和内存中运行的旧代码混载了。重启 Godot 即可;仍不行就运行开始菜单 "Add AI Console to a Project" 选中该项目刷新插件,再重启。(新版安装包已自动更新自带项目的插件)
